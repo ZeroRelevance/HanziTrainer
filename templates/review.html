@@ -3,15 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WaniKani Clone - Reviews</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <title>Hanzi Trainer - Reviews</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="review-container">
+        <a href="/" class="button" left="0" top="0" position="absolute">Return Home 🏚️</a>
         <div id="character" class="character"></div>
         <input type="text" id="answer-input" autocomplete="off">
         <div id="correct-answer" class="correct-answer hidden"></div>
     </div>
+    <img src="{{ url_for('static', filename='tones.png') }}" class="tones-img">
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

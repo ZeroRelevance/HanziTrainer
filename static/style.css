@@ -29,6 +29,18 @@ body {
     transition: background-color 0.3s;
 }
 
+#answer-input.correct {
+    background-color: lightgreen;
+}
+
+#answer-input.incorrect {
+    background-color: tomato;
+}
+
+#answer-input.halfway {
+    background-color: orange;
+}
+
 .correct-answer {
     margin-top: 20px;
     font-size: 18px;
@@ -52,4 +64,12 @@ body {
 
 .button:hover {
     background-color: #0056b3;
+}
+
+.tones-img {
+    position: absolute;
+    height: 25%;
+    justify-self: center;
+    bottom: 0;
+    padding: 20px;
 }

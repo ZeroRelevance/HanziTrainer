@@ -1,50 +1,36 @@
 document.addEventListener("DOMContentLoaded", function () {
-    let currentIndex = 0;
-    let characters = [];
+    let currentWord = '';
+
     const characterElement = document.getElementById("character");
     const answerInput = document.getElementById("answer-input");
     const correctAnswerElement = document.getElementById("correct-answer");
 
-    let previousIndex = -1;
-
-    function loadCharacters() {
-        fetch('/get_character')
+    function loadWord() {
+        fetch('/get_word')
             .then(response => response.json())
             .then(data => {
-                characters = data;
-                showCharacter();
+                currentWord = data.word;
+                showWord();
             });
     }
 
-    function showCharacter() {
-        if (currentIndex < characters.length) {
-            characterElement.textContent = characters[currentIndex].character;
-            correctAnswerElement.classList.add('hidden');
-            correctAnswerElement.textContent = '';
-            answerInput.value = '';
-            answerInput.focus();
-            answerInput.style.backgroundColor = "";  // Reset background color
-            answerInput.style.display = "block";
-        } else {
-            // All characters reviewed
-            characterElement.textContent = 'Review Complete!';
-            correctAnswerElement.textContent = '';
-            answerInput.style.display = "none";
-
-            const homeButton = document.createElement("a");
-            homeButton.href = "/";
-            homeButton.className = "button";
-            homeButton.textContent = "Go to Homepage";
-            document.querySelector(".review-container").appendChild(homeButton);
-        }
+    function showWord() {
+        characterElement.textContent = currentWord;
+        correctAnswerElement.classList.add('hidden');
+        correctAnswerElement.textContent = '';
+        answerInput.value = '';
+        answerInput.focus();
+        answerInput.className = "";  // Reset background color class
+        answerInput.style.display = "block";
     }
 
     answerInput.addEventListener('keypress', function (event) {
         if (event.key === 'Enter') {
-            if (answerInput.style.backgroundColor === 'mediumseagreen' || answerInput.style.backgroundColor === 'tomato') {
-                previousIndex = currentIndex;
-                currentIndex++;
-                showCharacter();
+            if (answerInput.classList.contains('correct')
+                || answerInput.classList.contains('incorrect')
+                || answerInput.classList.contains('halfway')) {
+                loadWord();
+                showWord();
             } else {
                 const answer = answerInput.value;
                 fetch('/check_answer', {
@@ -52,31 +38,47 @@ document.addEventListener("DOMContentLoaded", function () {
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ answer: answer, current_index: currentIndex })
+                    body: JSON.stringify({ answer: answer, current_word: currentWord })
                 })
                     .then(response => response.json())
                     .then(data => {
                         correctAnswerElement.classList.remove('hidden');
-                        correctAnswerElement.textContent = `Correct answer: ${data.correct_answer}`;
+                        correctAnswerElement.textContent = `Correct answer(s): ${data.correct_answer}`;
                         if (data.is_correct) {
-                            answerInput.style.backgroundColor = 'mediumseagreen';
+                            answerInput.classList.add('correct');
                         } else {
-                            answerInput.style.backgroundColor = 'tomato';
+                            if (data.all_wrong) {
+                                answerInput.classList.add('incorrect');
+                            } else {
+                                answerInput.classList.add('halfway');
+                            }
                         }
                     });
+                const msg = new SpeechSynthesisUtterance(currentWord);
+                msg.lang = 'zh-CN'; // Chinese Language Code
+            
+                window.speechSynthesis.speak(msg);
             }
-        } else if (event.key === '\\') {
-            undoLastAction();
         }
     });
 
-    function undoLastAction() {
-        if (previousIndex >= 0) {
-            currentIndex = previousIndex;
-            previousIndex = -1;
-            showCharacter();
-        }
-    }
+    answerInput.addEventListener('keyup', function(event) {
+        if (event.key === '\\') {
+            // Prevent adding the backslash to the input
+            event.preventDefault();
 
-    loadCharacters();
+            fetch('/undo')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.word != null) {
+                        currentWord = data.word;
+                        showWord();
+                    }
+                });
+        }
+    });
+
+
+    loadWord();
+
 });
