@@ -6,12 +6,12 @@ from convert_pinyin import convertPinyin
 app = Flask(__name__)
 
 def load_characters():
-    with open('characters.csv', mode='r', encoding='utf-8') as infile:
+    with open('data_files/characters.csv', mode='r', encoding='utf-8') as infile:
         reader = csv.reader(infile)
         return {rows[0] : rows[1].rstrip() for rows in reader}
 
 def load_words():
-    with open('words.csv', mode='r', encoding='utf-8') as infile:
+    with open('data_files/words.csv', mode='r', encoding='utf-8') as infile:
         reader = csv.reader(infile)
         return {rows[0] : rows[1].rstrip().split('|') for rows in reader if all(char in allowed_chars_set for char in rows[0])}
 
@@ -85,7 +85,6 @@ def check_answer():
             else:
                 all_correct = False
                 
-                
             character_dict[char] += '1' if compatible else '0'
             
     else:
@@ -113,7 +112,7 @@ def undo():
         return jsonify(word=None)
 
 def update_csv():
-    with open('characters.csv', mode='w', encoding='utf-8') as outfile:
+    with open('data_files/characters.csv', mode='w', encoding='utf-8') as outfile:
         for char in allowed_chars_set:
             outfile.write(f"{char},{character_dict[char]}\n")
 
