@@ -5,24 +5,52 @@ from flask import Flask, render_template, jsonify, request
 from convert_pinyin import convertPinyin
 
 app = Flask(__name__)
-
-def load_sessions():
-    with open('data_files/sessions.csv', mode='r', encoding='utf-8') as file:
-        reader = csv.reader(file)
-        return [(row[0], row[1], row[2].rstrip()) for row in reader]
     
 def load_config():
     with open('config/config.json', mode='r') as file:
         return json.load(file)
 
-def load_characters(filename):
-    with open(f'data_files/{filename}', mode='r', encoding='utf-8') as file:
+def do_merge():
+    with open(config['session_char_list'], mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
-        return {row[0] : row[1].rstrip() for row in reader}
+        session_char_dict = {row[0] : row[1].rstrip() for row in reader}
+        
+    session_chars = set(session_char_dict.keys())
+    
+    if len(session_chars) != 0:
+        with open(config['all_characters_file'], mode='r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            all_char_dict = {row[0] : row[1].rstrip() for row in reader}
+        
+        for char in session_chars:
+            all_char_dict[char] = session_char_dict[char]
+            
+        with open(config['all_characters_file'], mode='w', encoding='utf-8') as outfile:
+            for char in all_char_dict.keys():
+                outfile.write(f"{char},{all_char_dict[char]}\n")
 
-def load_words(filename):
+def load_sessions():
+    with open(config['session_file'], mode='r', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        return [(row[0], row[1], row[2].rstrip()) for row in reader]
+
+def load_characters():
+    with open(config['current_character_list'], mode='r', encoding='utf-8') as file:
+        character_list = file.read().rstrip().split(',')
+    
+    with open(config['all_characters_file'], mode='r', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        all_char_dict = {row[0] : row[1].rstrip() for row in reader}
+        
+    with open(config['session_char_list'], mode='w', encoding='utf-8') as outfile:
+        for char in character_list:
+            outfile.write(f"{char},{all_char_dict[char]}\n")
+        
+    return {char : all_char_dict[char] for char in character_list}
+
+def load_words():
     # loads all words that only have characters that are in the character list
-    with open(f'data_files/{filename}', mode='r', encoding='utf-8') as file:
+    with open(config['word_file'], mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
         return {row[0] : row[1].rstrip().split('|') for row in reader if all(char in allowed_chars_set for char in row[0])}
 
@@ -51,7 +79,6 @@ def calculate_weights():
 
 def start_session():
     global sessions
-    global config
     
     global character_dict
     global allowed_chars_set
@@ -62,16 +89,16 @@ def start_session():
     global correct_num
     global total_num
     
+    do_merge()
+    
     sessions = load_sessions()
     sessions.append((str(len(sessions)), '0', '0'))
-    
-    config = load_config()
 
-    character_dict = load_characters(config['character_file'])
+    character_dict = load_characters()
     allowed_chars_set = set(character_dict.keys())
     print(f'Loaded {len(allowed_chars_set)} characters.')
 
-    word_dict = load_words(config['word_file'])
+    word_dict = load_words()
     words = list(word_dict.keys())
     print(f'Loaded {len(words)} words.')
 
@@ -89,6 +116,9 @@ def weights_analysis():
 
 @app.route('/')
 def home():
+    
+    do_merge()
+    
     return render_template('home.html')
 
 @app.route('/reviews')
@@ -188,14 +218,17 @@ def get_accuracy():
         return jsonify(accuracy='0', correct=0, incorrect=0)
 
 def update_csv():
-    with open('data_files/characters.csv', mode='w', encoding='utf-8') as outfile:
+    with open(config['session_char_list'], mode='w', encoding='utf-8') as outfile:
         for char in allowed_chars_set:
             outfile.write(f"{char},{character_dict[char]}\n")
     
     sessions[-1] = (str(len(sessions)-1), str(correct_num), str(total_num))
-    with open('data_files/sessions.csv', mode='w', encoding='utf-8') as outfile:
+    with open(config['session_file'], mode='w', encoding='utf-8') as outfile:
         for session_id, correct, total in sessions:
             outfile.write(f"{session_id},{correct},{total}\n")
 
 if __name__ == '__main__':
+    global config
+    
+    config = load_config()    
     app.run(debug=True)
