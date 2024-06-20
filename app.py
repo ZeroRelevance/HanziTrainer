@@ -5,15 +5,23 @@ from convert_pinyin import convertPinyin
 
 app = Flask(__name__)
 
+def load_sessions():
+    with open('data_files/sessions.csv', mode='r', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        return [(row[0], row[1], row[2].rstrip()) for row in reader]
+
 def load_characters():
-    with open('data_files/characters.csv', mode='r', encoding='utf-8') as infile:
-        reader = csv.reader(infile)
-        return {rows[0] : rows[1].rstrip() for rows in reader}
+    with open('data_files/characters.csv', mode='r', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        return {row[0] : row[1].rstrip() for row in reader}
 
 def load_words():
-    with open('data_files/words.csv', mode='r', encoding='utf-8') as infile:
-        reader = csv.reader(infile)
-        return {rows[0] : rows[1].rstrip().split('|') for rows in reader if all(char in allowed_chars_set for char in rows[0])}
+    with open('data_files/words.csv', mode='r', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        return {row[0] : row[1].rstrip().split('|') for row in reader if all(char in allowed_chars_set for char in row[0])}
+
+sessions = load_sessions()
+sessions.append((str(len(sessions)), '0', '0'))
 
 character_dict = load_characters()
 allowed_chars_set = set(character_dict.keys())
@@ -143,6 +151,11 @@ def update_csv():
     with open('data_files/characters.csv', mode='w', encoding='utf-8') as outfile:
         for char in allowed_chars_set:
             outfile.write(f"{char},{character_dict[char]}\n")
+    
+    sessions[-1] = (str(len(sessions)-1), str(correct_num), str(total_num))
+    with open('data_files/sessions.csv', mode='w', encoding='utf-8') as outfile:
+        for session_id, correct, total in sessions:
+            outfile.write(f"{session_id},{correct},{total}\n")
 
 if __name__ == '__main__':
     app.run(debug=True)
