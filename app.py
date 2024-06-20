@@ -1,5 +1,6 @@
 import csv
 import random
+import json
 from flask import Flask, render_template, jsonify, request
 from convert_pinyin import convertPinyin
 
@@ -9,14 +10,19 @@ def load_sessions():
     with open('data_files/sessions.csv', mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
         return [(row[0], row[1], row[2].rstrip()) for row in reader]
+    
+def load_config():
+    with open('config/config.json', mode='r') as file:
+        return json.load(file)
 
-def load_characters():
-    with open('data_files/characters.csv', mode='r', encoding='utf-8') as file:
+def load_characters(filename):
+    with open(f'data_files/{filename}', mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
         return {row[0] : row[1].rstrip() for row in reader}
 
-def load_words():
-    with open('data_files/words.csv', mode='r', encoding='utf-8') as file:
+def load_words(filename):
+    # loads all words that only have characters that are in the character list
+    with open(f'data_files/{filename}', mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
         return {row[0] : row[1].rstrip().split('|') for row in reader if all(char in allowed_chars_set for char in row[0])}
 
@@ -45,6 +51,7 @@ def calculate_weights():
 
 def start_session():
     global sessions
+    global config
     
     global character_dict
     global allowed_chars_set
@@ -57,12 +64,14 @@ def start_session():
     
     sessions = load_sessions()
     sessions.append((str(len(sessions)), '0', '0'))
+    
+    config = load_config()
 
-    character_dict = load_characters()
+    character_dict = load_characters(config['character_file'])
     allowed_chars_set = set(character_dict.keys())
     print(f'Loaded {len(allowed_chars_set)} characters.')
 
-    word_dict = load_words()
+    word_dict = load_words(config['word_file'])
     words = list(word_dict.keys())
     print(f'Loaded {len(words)} words.')
 
