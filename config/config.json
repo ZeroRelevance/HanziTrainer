@@ -1,8 +1,9 @@
 {
     "session_file": "user_data/sessions.csv",
     "character_file": "data_files/characters.csv",
-    "word_file": "data_files/hsk_words.csv",
+    "word_file": "data_files/all_words.csv",
     "all_characters_file": "user_data/character_data.csv",
     "session_char_list": "user_data/temp/session_char_list.csv",
-    "current_character_list": "user_data/current_character_list.csv"
+    "current_character_list": "user_data/current_character_list.csv",
+    "hanzi_files_path": "data_files/hanzi_files/"
 }

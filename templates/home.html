@@ -9,8 +9,22 @@
 </head>
 <body>
     <div class="home-container">
-        <h1>Welcome to Hanzi Trainer</h1>
-        <a href="/reviews" class="button">Start Reviews</a>
+        <h1>Hanzi Trainer 汉字训练</h1>
+        <div class="dropdown">
+            <form method="POST">
+            <label for="hanzi-dropdown">Select character set:</label>
+            <select id="hanzi-dropdown">
+                <option value="hsk1">HSK1</option>
+                <option value="hsk2">HSK2</option>
+                <option value="hsk3">HSK3</option>
+                <option value="hsk4">HSK4</option>
+                <option value="hsk5">HSK5</option>
+                <option value="hsk6">HSK6</option>
+                <option value="custom">Custom</option>
+            </select>
+        </div>
+        <div class="button" id="start-button">Start Reviews</div>
     </div>
+    <script src="{{ url_for('static', filename='home_script.js') }}"></script>
 </body>
 </html>

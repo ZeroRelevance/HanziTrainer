@@ -5,11 +5,12 @@ from flask import Flask, render_template, jsonify, request
 from convert_pinyin import convertPinyin
 
 app = Flask(__name__)
-    
+
 def load_config():
     with open('config/config.json', mode='r') as file:
         return json.load(file)
 
+# merges all the character history from the last session with the mass character list
 def do_merge():
     with open(config['session_char_list'], mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
@@ -28,6 +29,9 @@ def do_merge():
         with open(config['all_characters_file'], mode='w', encoding='utf-8') as outfile:
             for char in all_char_dict.keys():
                 outfile.write(f"{char},{all_char_dict[char]}\n")
+                
+        with open(config['session_char_list'], mode='w', encoding='utf-8') as outfile:
+            outfile.write('')
 
 def load_sessions():
     with open(config['session_file'], mode='r', encoding='utf-8') as file:
@@ -35,7 +39,7 @@ def load_sessions():
         return [(row[0], row[1], row[2].rstrip()) for row in reader]
 
 def load_characters():
-    with open(config['current_character_list'], mode='r', encoding='utf-8') as file:
+    with open(config['hanzi_files_path'] + selected_hanzi_list + '.csv', mode='r', encoding='utf-8') as file:
         character_list = file.read().rstrip().split(',')
     
     with open(config['all_characters_file'], mode='r', encoding='utf-8') as file:
@@ -107,23 +111,32 @@ def start_session():
     total_num = 0
     
 
+def unrepresentation_analysis():
+    unrepresented = allowed_chars_set.difference(set(''.join(words)))
+    
+    print(f'Total unrepresented: {len(unrepresented)}')
+    if len(unrepresented) != 0:
+        print(f'Unrepresented hanzi: {unrepresented}')
+        
+    return unrepresented
+
 def weights_analysis():
     weights = calculate_weights()
     print(f'Min weight ({words[weights.index(min(weights))]}): {min(weights)}')
     print(f'Max weight ({words[weights.index(max(weights))]}): {max(weights)}')
     print(f'Standard deviation: {(sum([weight**2 for weight in weights])/len(weights) - (sum(weights)/len(weights))**2)**0.5 if len(weights) != 0 else 1.0}')
+    return weights
     
 
 @app.route('/')
 def home():
-    
     do_merge()
-    
     return render_template('home.html')
 
 @app.route('/reviews')
 def reviews():
     start_session()
+    unrepresented = unrepresentation_analysis()
     weights_analysis()
     return render_template('review.html', return_url='/')
 
@@ -137,6 +150,7 @@ def get_word():
 def check_answer():
     global correct_num
     global total_num
+    
     data = request.json
     user_input = data['answer'].strip()
     current_word = data['current_word']
@@ -207,6 +221,7 @@ def undo():
     else:
         return jsonify(word=None)
 
+
 @app.route('/get_accuracy', methods=['GET'])
 def get_accuracy():
     global correct_num
@@ -217,6 +232,13 @@ def get_accuracy():
     else:
         return jsonify(accuracy='0', correct=0, incorrect=0)
 
+
+@app.route('/select_hanzi_list', methods=['POST'])
+def select_hanzi_list():
+    global selected_hanzi_list
+    selected_hanzi_list = request.json['list_id']
+    return 'Updated hanzi list.'
+    
 def update_csv():
     with open(config['session_char_list'], mode='w', encoding='utf-8') as outfile:
         for char in allowed_chars_set:
@@ -229,6 +251,9 @@ def update_csv():
 
 if __name__ == '__main__':
     global config
+    global selected_hanzi_list
+
+    selected_hanzi_list = 'hsk1'
+    config = load_config()
     
-    config = load_config()    
     app.run(debug=True)
