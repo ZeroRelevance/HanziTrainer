@@ -14,13 +14,24 @@
             <form method="POST">
             <label for="hanzi-dropdown">Select character set:</label>
             <select id="hanzi-dropdown">
+                <option value="unlocked">Unlocked</option>
                 <option value="hsk1">HSK1</option>
                 <option value="hsk2">HSK2</option>
                 <option value="hsk3">HSK3</option>
                 <option value="hsk4">HSK4</option>
                 <option value="hsk5">HSK5</option>
                 <option value="hsk6">HSK6</option>
-                <option value="custom">Custom</option>
+                <option value="hsk79">HSK7-9</option>
+            </select>
+        </div>
+        <div class="dropdown">
+            <form method="POST">
+            <label for="word-dropdown">Select word list:</label>
+            <select id="word-dropdown">
+                <option value="hsk_words">Up to HSK6</option>
+                <option value="hsk79_words">Up to HSK7-9</option>
+                <option value="all_words_with_hsk_hanzi">All HSK6-Compatible Words</option>
+                <option value="every_word">Every Word</option>
             </select>
         </div>
         <div class="button" id="start-button">Start Reviews</div>

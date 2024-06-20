@@ -54,7 +54,7 @@ def load_characters():
 
 def load_words():
     # loads all words that only have characters that are in the character list
-    with open(config['word_file'], mode='r', encoding='utf-8') as file:
+    with open(config['word_files_path'] + selected_word_list + '.csv', mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
         return {row[0] : row[1].rstrip().split('|') for row in reader if all(char in allowed_chars_set for char in row[0])}
 
@@ -233,11 +233,14 @@ def get_accuracy():
         return jsonify(accuracy='0', correct=0, incorrect=0)
 
 
-@app.route('/select_hanzi_list', methods=['POST'])
-def select_hanzi_list():
+@app.route('/select_lists', methods=['POST'])
+def select_lists():
     global selected_hanzi_list
-    selected_hanzi_list = request.json['list_id']
-    return 'Updated hanzi list.'
+    global selected_word_list
+    
+    selected_hanzi_list = request.json['hanzi_list']
+    selected_word_list = request.json['word_list']
+    return 'Selected lists.'
     
 def update_csv():
     with open(config['session_char_list'], mode='w', encoding='utf-8') as outfile:
@@ -252,8 +255,11 @@ def update_csv():
 if __name__ == '__main__':
     global config
     global selected_hanzi_list
+    global selected_word_list
 
     selected_hanzi_list = 'hsk1'
+    selected_word_list = 'hsk_words'
+    
     config = load_config()
     
     app.run(debug=True)

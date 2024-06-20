@@ -1,14 +1,15 @@
 document.addEventListener("DOMContentLoaded", function () {
     const hanziDropdownElement = document.getElementById("hanzi-dropdown");
+    const wordDropdownElement = document.getElementById("word-dropdown");
     const startButtonElement = document.getElementById("start-button");
     
     startButtonElement.addEventListener('click', function() {
-        fetch('/select_hanzi_list', {
+        fetch('/select_lists', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({list_id: hanziDropdownElement.value})
+            body: JSON.stringify({hanzi_list: hanziDropdownElement.value, word_list: wordDropdownElement.value})
         })
         .then(response => {
             if (response.ok) {
