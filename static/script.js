@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const characterElement = document.getElementById("character");
     const answerInput = document.getElementById("answer-input");
     const correctAnswerElement = document.getElementById("correct-answer");
+    const accuracyElement = document.getElementById("accuracy-display");
 
     function loadWord() {
         fetch('/get_word')
@@ -54,6 +55,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             }
                         }
                     });
+                updateAccuracy()
                 const msg = new SpeechSynthesisUtterance(currentWord);
                 msg.lang = 'zh-CN'; // Chinese Language Code
             
@@ -61,6 +63,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
     });
+
 
     answerInput.addEventListener('keyup', function(event) {
         if (event.key === '\\') {
@@ -75,8 +78,19 @@ document.addEventListener("DOMContentLoaded", function () {
                         showWord();
                     }
                 });
+            
+            updateAccuracy()
         }
     });
+
+
+    function updateAccuracy() {
+        fetch('/get_accuracy')
+            .then(response => response.json())
+            .then(data => {
+                accuracyElement.textContent = `${data.accuracy}% | ${data.correct} ✔ ${data.incorrect} ✘`;
+            });
+    }
 
 
     loadWord();

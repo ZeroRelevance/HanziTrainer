@@ -8,8 +8,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <a href="/" class="top-left-button">Return Home 🏚️</a>
+    <a id="accuracy-display" class="top-right-text">0% | 0 ✔ 0 ✘</a>
     <div class="review-container">
-        <a href="/" class="button" left="0" top="0" position="absolute">Return Home 🏚️</a>
         <div id="character" class="character"></div>
         <input type="text" id="answer-input" autocomplete="off">
         <div id="correct-answer" class="correct-answer hidden"></div>
