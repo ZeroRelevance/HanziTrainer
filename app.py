@@ -75,7 +75,7 @@ def calculate_weights():
         correct_num = character_dict[char].count('1')
         incorrect_num = character_dict[char].count('0')
         new_char_modifier = max(4 - correct_num, 1)
-        char_weights[char] = 1.3 ** (incorrect_num - correct_num) * new_char_modifier
+        char_weights[char] = 1.4 ** (incorrect_num - correct_num) * new_char_modifier
     
     # takes geometric mean of each character's weight in each word
     weights = []
@@ -91,6 +91,7 @@ def calculate_weights():
     weights = [weight / mean for weight in weights]
     
     return weights
+
 
 def start_session():
     global sessions
@@ -131,6 +132,42 @@ def unrepresentation_analysis():
         
     return unrepresented
 
+
+def novelty_analysis():
+    correct_counts = {}
+    incorrect_counts = {}
+    sum_counts = {}
+    
+    for char in allowed_chars_set:
+        char_correct_num = character_dict[char].count('1')
+        char_incorrect_num = character_dict[char].count('0')
+        char_sum_num = char_correct_num + char_incorrect_num
+        
+        if char_correct_num not in correct_counts:
+            correct_counts[char_correct_num] = 0
+        correct_counts[char_correct_num] += 1
+        
+        if char_incorrect_num not in incorrect_counts:
+            incorrect_counts[char_incorrect_num] = 0
+        incorrect_counts[char_incorrect_num] += 1
+        
+        if char_sum_num not in sum_counts:
+            sum_counts[char_sum_num] = 0
+        sum_counts[char_sum_num] += 1
+        
+    print('Total correct answer counts:')
+    for index in sorted(correct_counts.keys()):
+        print(f'- {index}: {correct_counts[index]}')
+        
+    print('Total incorrect answer counts:')
+    for index in sorted(incorrect_counts.keys()):
+        print(f'- {index}: {incorrect_counts[index]}')
+        
+    print('Total answer counts:')
+    for index in sorted(sum_counts.keys()):
+        print(f'- {index}: {sum_counts[index]}')
+
+
 def weights_analysis():
     weights = calculate_weights()
     print(f'Min weight ({words[weights.index(min(weights))]}): {min(weights)}')
@@ -144,18 +181,22 @@ def home():
     do_merge()
     return render_template('home.html')
 
+
 @app.route('/reviews')
 def reviews():
     start_session()
     unrepresented = unrepresentation_analysis()
+    novelty_analysis()
     weights_analysis()
     return render_template('review.html', return_url='/')
+
 
 @app.route('/get_word', methods=['GET'])
 def get_word():
     weights = calculate_weights()
     word = random.choices(words, weights=weights, k=1)[0]
     return jsonify(word = word)
+
 
 @app.route('/check_answer', methods=['POST'])
 def check_answer():
@@ -213,6 +254,7 @@ def check_answer():
     history.append( current_word )
 
     return jsonify(is_correct=all_correct, all_wrong=all_wrong, correct_answer=convertPinyin(', '.join(correct_answers)))
+
 
 @app.route('/undo', methods=['GET'])
 def undo():
