@@ -27,7 +27,7 @@ def do_merge():
             all_char_dict[char] = session_char_dict[char]
             
         with open(config['all_characters_file'], mode='w', encoding='utf-8') as outfile:
-            for char in all_char_dict.keys():
+            for char in sorted(all_char_dict.keys(), key=lambda char: (len(all_char_dict[char]) + (sum([int(i) for i in list(all_char_dict[char])]) / (len(all_char_dict[char]) + 1))), reverse=True):
                 outfile.write(f"{char},{all_char_dict[char]}\n")
                 
         with open(config['session_char_list'], mode='w', encoding='utf-8') as outfile:
