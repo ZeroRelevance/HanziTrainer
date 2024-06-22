@@ -40,12 +40,14 @@ def load_sessions():
 
 def load_characters():
     with open(config['hanzi_files_path'] + selected_hanzi_list + '.txt', mode='r', encoding='utf-8') as file:
-        character_list = file.read().rstrip().split()
+        character_list = set(file.read().rstrip())
     
     with open(config['all_characters_file'], mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
         all_char_dict = {row[0] : row[1].rstrip() for row in reader}
         
+    character_list.intersection_update(set(all_char_dict.keys()))    
+    
     with open(config['session_char_list'], mode='w', encoding='utf-8') as outfile:
         for char in character_list:
             outfile.write(f"{char},{all_char_dict[char]}\n")
