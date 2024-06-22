@@ -6,9 +6,11 @@ from convert_pinyin import convertPinyin
 
 app = Flask(__name__)
 
+
 def load_config():
     with open('config/config.json', mode='r') as file:
         return json.load(file)
+
 
 # merges all the character history from the last session with the mass character list
 def do_merge():
@@ -33,10 +35,12 @@ def do_merge():
         with open(config['session_char_list'], mode='w', encoding='utf-8') as outfile:
             outfile.write('')
 
+
 def load_sessions():
     with open(config['session_file'], mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
         return [(row[0], row[1], row[2].rstrip()) for row in reader]
+
 
 def load_characters():
     with open(config['hanzi_files_path'] + selected_hanzi_list + '.txt', mode='r', encoding='utf-8') as file:
@@ -60,6 +64,7 @@ def load_characters():
             outfile.write(f"{char},{all_char_dict[char]}\n")
         
     return {char : all_char_dict[char] for char in character_list}
+
 
 def load_words():
     # loads all words that only have characters that are in the character list
@@ -324,6 +329,7 @@ def select_lists():
     selected_word_list = request.json['word_list']
     return 'Selected lists.'
     
+    
 def update_csv():
     with open(config['session_char_list'], mode='w', encoding='utf-8') as outfile:
         for char in allowed_chars_set:
@@ -333,6 +339,7 @@ def update_csv():
     with open(config['session_file'], mode='w', encoding='utf-8') as outfile:
         for session_id, correct, total in sessions:
             outfile.write(f"{session_id},{correct},{total}\n")
+
 
 if __name__ == '__main__':
     global config
