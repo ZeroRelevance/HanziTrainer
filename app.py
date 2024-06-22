@@ -39,8 +39,8 @@ def load_sessions():
         return [(row[0], row[1], row[2].rstrip()) for row in reader]
 
 def load_characters():
-    with open(config['hanzi_files_path'] + selected_hanzi_list + '.csv', mode='r', encoding='utf-8') as file:
-        character_list = file.read().rstrip().split(',')
+    with open(config['hanzi_files_path'] + selected_hanzi_list + '.txt', mode='r', encoding='utf-8') as file:
+        character_list = file.read().rstrip().split()
     
     with open(config['all_characters_file'], mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
@@ -256,10 +256,10 @@ if __name__ == '__main__':
     global config
     global selected_hanzi_list
     global selected_word_list
+    
+    config = load_config()
 
     selected_hanzi_list = 'hsk1'
     selected_word_list = 'hsk_words'
-    
-    config = load_config()
     
     app.run(debug=True)
