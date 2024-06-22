@@ -40,13 +40,20 @@ def load_sessions():
 
 def load_characters():
     with open(config['hanzi_files_path'] + selected_hanzi_list + '.txt', mode='r', encoding='utf-8') as file:
-        character_list = set(file.read().rstrip())
+        original_character_list = set(file.read().rstrip())
     
     with open(config['all_characters_file'], mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
         all_char_dict = {row[0] : row[1].rstrip() for row in reader}
-        
-    character_list.intersection_update(set(all_char_dict.keys()))    
+    
+    character_list = original_character_list.intersection(set(all_char_dict.keys()))
+    
+    original_length = len(original_character_list)
+    new_length = len(character_list)
+    
+    if original_length > new_length:
+        print(f'{original_length - new_length} characters in list not recognised (not necessarily Hanzi).')
+        print(sorted(original_character_list.difference(character_list)))
     
     with open(config['session_char_list'], mode='w', encoding='utf-8') as outfile:
         for char in character_list:
@@ -62,11 +69,13 @@ def load_words():
 
 def calculate_weights():
     # gives each character a weight exponentially proportional to the net number of incorrect answers
+    # if a character has not been marked correctly much, we also further increase its weight
     char_weights = {}
     for char in allowed_chars_set:
         correct_num = character_dict[char].count('1')
         incorrect_num = character_dict[char].count('0')
-        char_weights[char] = 1.3 ** (incorrect_num - correct_num)
+        new_char_modifier = max(4 - correct_num, 1)
+        char_weights[char] = 1.3 ** (incorrect_num - correct_num) * new_char_modifier
     
     # takes geometric mean of each character's weight in each word
     weights = []
