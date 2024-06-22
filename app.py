@@ -66,16 +66,26 @@ def load_words():
     with open(config['word_files_path'] + selected_word_list + '.csv', mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
         return {row[0] : row[1].rstrip().split('|') for row in reader if all(char in allowed_chars_set for char in row[0])}
+    
+    
+def calculate_words_per_char():
+    words_per_char = {}
+    for char in allowed_chars_set:
+        words_per_char[char] = len([word for word in words if char in word])
+    return words_per_char
+
 
 def calculate_weights():
     # gives each character a weight exponentially proportional to the net number of incorrect answers
     # if a character has not been marked correctly much, we also further increase its weight
+    # also balances character weight by frequency in word list to increase frequency of underrepresented characters
     char_weights = {}
     for char in allowed_chars_set:
         correct_num = character_dict[char].count('1')
         incorrect_num = character_dict[char].count('0')
         new_char_modifier = max(4 - correct_num, 1)
-        char_weights[char] = 1.4 ** (incorrect_num - correct_num) * new_char_modifier
+        word_freq_weighting = mean_words_per_represented_char / max(1, words_per_char_dict[char])
+        char_weights[char] = 1.4 ** (incorrect_num - correct_num) * new_char_modifier * word_freq_weighting
     
     # takes geometric mean of each character's weight in each word
     weights = []
@@ -101,6 +111,10 @@ def start_session():
     global word_dict
     global words
     
+    global words_per_char_dict
+    global unrepresented_chars_set
+    global mean_words_per_represented_char
+    
     global history
     global correct_num
     global total_num
@@ -117,20 +131,27 @@ def start_session():
     word_dict = load_words()
     words = list(word_dict.keys())
     print(f'Loaded {len(words)} words.')
+    
+    if len(words) == 0:
+        print('No words available, aborting.')
+        return render_template('home.html')
+    
+    words_per_char_dict = calculate_words_per_char()
+    unrepresented_chars_set = {char for char, count in words_per_char_dict.items() if count == 0}
+    mean_words_per_represented_char = sum(words_per_char_dict.values())/(len(words_per_char_dict.keys()) - len(unrepresented_chars_set))
 
     history = []
     correct_num = 0
     total_num = 0
     
-
-def unrepresentation_analysis():
-    unrepresented = allowed_chars_set.difference(set(''.join(words)))
+    return None
     
-    print(f'Total unrepresented: {len(unrepresented)}')
-    if len(unrepresented) != 0:
-        print(f'Unrepresented hanzi: {unrepresented}')
-        
-    return unrepresented
+
+def representation_analysis():
+    print(f'Total unrepresented: {len(unrepresented_chars_set)}')
+    if len(unrepresented_chars_set) != 0:
+        print(f'Unrepresented hanzi: {unrepresented_chars_set}')
+    print(f'Mean words per represented character: {mean_words_per_represented_char}')
 
 
 def novelty_analysis():
@@ -187,10 +208,15 @@ def home():
 
 @app.route('/reviews')
 def reviews():
-    start_session()
-    unrepresented = unrepresentation_analysis()
+    result = start_session()
+    
+    if result != None:
+        return result
+    
+    representation_analysis()
     novelty_analysis()
     weights_analysis()
+    
     return render_template('review.html', return_url='/')
 
 
