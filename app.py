@@ -154,16 +154,19 @@ def novelty_analysis():
         if char_sum_num not in sum_counts:
             sum_counts[char_sum_num] = 0
         sum_counts[char_sum_num] += 1
-        
-    print('Total correct answer counts:')
+    
+    mean_correct = sum([key * amount for key, amount in correct_counts.items()])/sum([amount for amount in correct_counts.values()])
+    print(f'Total correct answer counts: (mean = {mean_correct:0.4f})')
     for index in sorted(correct_counts.keys()):
         print(f'- {index}: {correct_counts[index]}')
         
-    print('Total incorrect answer counts:')
+    mean_incorrect = sum([key * amount for key, amount in incorrect_counts.items()])/sum([amount for amount in incorrect_counts.values()])
+    print(f'Total incorrect answer counts: (mean = {mean_incorrect:0.4f})')
     for index in sorted(incorrect_counts.keys()):
         print(f'- {index}: {incorrect_counts[index]}')
         
-    print('Total answer counts:')
+    mean_total = sum([key * amount for key, amount in sum_counts.items()])/sum([amount for amount in sum_counts.values()])
+    print(f'Total answer counts: (mean = {mean_total:0.4f})')
     for index in sorted(sum_counts.keys()):
         print(f'- {index}: {sum_counts[index]}')
 
