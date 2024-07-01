@@ -328,6 +328,14 @@ def select_lists():
     selected_hanzi_list = request.json['hanzi_list']
     selected_word_list = request.json['word_list']
     return 'Selected lists.'
+
+
+@app.route('/get_new_characters', methods=['GET'])
+def get_new_characters():
+    with open(config['hanzi_files_path'] + "hsk79.txt", 'r', encoding='utf-8') as file:
+        new_chars = random.choices(list(file.read().rstrip()), k=10)
+    print(new_chars)
+    return jsonify(new_chars=new_chars)
     
     
 def update_csv():

@@ -11,7 +11,6 @@
     <div class="home-container">
         <h1>Hanzi Trainer 汉字训练</h1>
         <div class="dropdown">
-            <form method="POST">
             <label for="hanzi-dropdown">Select character set:</label>
             <select id="hanzi-dropdown">
                 <option value="hsk1">HSK1</option>
@@ -26,7 +25,6 @@
             </select>
         </div>
         <div class="dropdown">
-            <form method="POST">
             <label for="word-dropdown">Select word list:</label>
             <select id="word-dropdown">
                 <option value="hsk_words">Up to HSK6</option>
@@ -37,6 +35,32 @@
         </div>
         <div class="button" id="start-button">Start Reviews</div>
     </div>
+
+    <!-- Level indicator -->
+    <div class="level-indicator">
+        <span>Level: <span id="current-level">1</span></span>
+        <span>XP: <span id="current-xp">0</span> / <span id="xp-to-next-level">100</span></span>
+        <button id="view-unlocked-chars">View Unlocked Characters</button>
+    </div>
+
+    <!-- Modal for unlocked characters -->
+    <div id="unlocked-chars-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Unlocked Characters</h2>
+            <div id="unlocked-chars-list"></div>
+        </div>
+    </div>
+
+    <!-- Modal for character details -->
+    <div id="char-details-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Character Details</h2>
+            <div id="char-details-content"></div>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='home_script.js') }}"></script>
 </body>
 </html>
