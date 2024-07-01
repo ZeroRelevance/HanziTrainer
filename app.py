@@ -6,9 +6,22 @@ from convert_pinyin import convertPinyin
 
 app = Flask(__name__)
 
+hsk_levels = ['1','2','3','4','5','6','79']
+
+
+def xp_for_next_level(current_level):
+    if current_level == 0:
+        return 0
+    return round(50 * (1.006 ** (current_level-1)))
+
 
 def load_config():
     with open('config/config.json', mode='r') as file:
+        return json.load(file)
+
+
+def load_account_data():
+    with open(config['account_data'], mode='r') as file:
         return json.load(file)
 
 
@@ -42,9 +55,14 @@ def load_sessions():
         return [(row[0], row[1], row[2].rstrip()) for row in reader]
 
 
+def get_unlocked_character_list():
+    with open(config['unlocked_character_list'], mode='r', encoding='utf-8') as file:
+        unlocked_character_list = set(file.read().rstrip())
+    return unlocked_character_list
+
+
 def load_characters():
-    with open(config['hanzi_files_path'] + selected_hanzi_list + '.txt', mode='r', encoding='utf-8') as file:
-        original_character_list = set(file.read().rstrip())
+    original_character_list = get_unlocked_character_list()
     
     with open(config['all_characters_file'], mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
@@ -207,7 +225,20 @@ def weights_analysis():
 
 @app.route('/')
 def home():
+    global account_data
+    global sessions
+    
+    global unlocked_character_list
+        
     do_merge()
+    
+    account_data = load_account_data()
+    sessions = load_sessions()
+    
+    update_account_data_with_session_data()
+    
+    unlocked_character_list = get_unlocked_character_list()
+    
     return render_template('home.html')
 
 
@@ -230,6 +261,11 @@ def get_word():
     weights = calculate_weights()
     word = random.choices(words, weights=weights, k=1)[0]
     return jsonify(word = word)
+
+
+@app.route('/get_character_list', methods=['GET'])
+def get_character_list():
+    return jsonify(character_list=sorted(unlocked_character_list))
 
 
 @app.route('/check_answer', methods=['POST'])
@@ -320,23 +356,87 @@ def get_accuracy():
         return jsonify(accuracy='0', correct=0, incorrect=0)
 
 
-@app.route('/select_lists', methods=['POST'])
-def select_lists():
-    global selected_hanzi_list
+@app.route('/select_word_list', methods=['POST'])
+def select_word_list():
     global selected_word_list
     
-    selected_hanzi_list = request.json['hanzi_list']
     selected_word_list = request.json['word_list']
-    return 'Selected lists.'
+    
+    return 'Selected list.'
 
 
 @app.route('/get_new_characters', methods=['GET'])
 def get_new_characters():
-    with open(config['hanzi_files_path'] + "hsk79.txt", 'r', encoding='utf-8') as file:
-        new_chars = random.choices(list(file.read().rstrip()), k=10)
-    print(new_chars)
-    return jsonify(new_chars=new_chars)
+    global unlocked_character_list
     
+    new_chars = []
+    
+    for level in hsk_levels:
+        with open(config['hanzi_files_path'] + f"hsk{level}.txt", 'r', encoding='utf-8') as file:
+            possible_char_list = list(set(file.read().rstrip()).difference(unlocked_character_list))
+        if len(possible_char_list) >= (10 - len(new_chars)):
+            new_chars = random.sample(possible_char_list, k=(10 - len(new_chars)))
+            break
+        else:
+            new_chars.append(possible_char_list)
+            if len(new_chars) == 10:
+                break
+            
+    print(new_chars)
+    
+    unlocked_character_list = unlocked_character_list.union(set(new_chars))
+    update_unlocked_character_list()
+    
+    return jsonify(new_chars=new_chars)
+
+
+@app.route('/attempt_level_up', methods=['GET'])
+def attempt_level_up():
+    current_level = account_data['level']
+    current_xp = account_data['xp']
+    required_xp = xp_for_next_level(current_level)
+    
+    level_ups = 0
+    
+    while current_xp >= required_xp:
+        current_level += 1
+        current_xp -= required_xp
+        
+        required_xp = xp_for_next_level(current_level)
+        
+        account_data['level'] = current_level
+        account_data['xp'] = current_xp
+        
+        level_ups += 1
+        
+    if level_ups > 0:
+        update_account_data_file()
+      
+    return jsonify(level_ups=level_ups)
+
+
+@app.route('/get_xp_data', methods=['GET'])
+def get_xp_data():
+    current_level = account_data['level']
+    current_xp = account_data['xp']
+    required_xp = xp_for_next_level(current_level)
+      
+    return jsonify(current_level=current_level, current_xp=current_xp, required_xp=required_xp)
+
+
+def update_account_data_with_session_data():
+    xp = 0
+    last_session = account_data['last_session']
+    
+    for i, _, total in sessions:
+        if int(i) > last_session:
+            xp += int(total)
+    
+    account_data['xp'] += xp
+    account_data['last_session'] = len(sessions) - 1
+    
+    update_account_data_file()
+
     
 def update_csv():
     with open(config['session_char_list'], mode='w', encoding='utf-8') as outfile:
@@ -347,16 +447,28 @@ def update_csv():
     with open(config['session_file'], mode='w', encoding='utf-8') as outfile:
         for session_id, correct, total in sessions:
             outfile.write(f"{session_id},{correct},{total}\n")
+            
+
+def update_unlocked_character_list():
+    global unlocked_character_list
+    
+    with open(config['unlocked_character_list'], mode='w', encoding='utf-8') as outfile:
+        outfile.write(''.join(sorted(unlocked_character_list)))
+
+
+def update_account_data_file():
+    print(account_data)
+    with open(config['account_data'], mode='w', encoding='utf-8') as outfile:
+        json.dump(account_data, outfile)
 
 
 if __name__ == '__main__':
     global config
-    global selected_hanzi_list
+    
     global selected_word_list
     
     config = load_config()
-
-    selected_hanzi_list = 'hsk1'
+    
     selected_word_list = 'hsk_words'
     
     app.run(debug=True)

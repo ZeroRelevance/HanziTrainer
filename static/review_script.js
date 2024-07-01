@@ -13,7 +13,8 @@ document.addEventListener("DOMContentLoaded", function () {
             .then(data => {
                 currentWord = data.word;
                 showWord();
-            });
+            })
+            .catch(error => console.error('Error fetching new word:', error));
     }
 
 
