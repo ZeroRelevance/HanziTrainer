@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const wordDropdownElement = document.getElementById("word-dropdown");
     const startButtonElement = document.getElementById("start-button");
     
+
     startButtonElement.addEventListener('click', function() {
         fetch('/select_lists', {
             method: 'POST',

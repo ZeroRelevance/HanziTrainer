@@ -201,7 +201,7 @@ def weights_analysis():
     weights = calculate_weights()
     print(f'Min weight ({words[weights.index(min(weights))]}): {min(weights)}')
     print(f'Max weight ({words[weights.index(max(weights))]}): {max(weights)}')
-    print(f'Standard deviation: {(sum([weight**2 for weight in weights])/len(weights) - (sum(weights)/len(weights))**2)**0.5 if len(weights) != 0 else 1.0}')
+    print(f'Standard deviation: {(sum([weight**2 for weight in weights])/len(weights) - (sum(weights)/len(weights))**2)**0.5 if len(weights) != 0 else "N/A"}')
     return weights
     
 

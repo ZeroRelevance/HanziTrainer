@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const correctAnswerElement = document.getElementById("correct-answer");
     const accuracyElement = document.getElementById("accuracy-display");
 
+    
     function loadWord() {
         fetch('/get_word')
             .then(response => response.json())
@@ -14,6 +15,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 showWord();
             });
     }
+
 
     function showWord() {
         characterElement.textContent = currentWord;
@@ -24,6 +26,7 @@ document.addEventListener("DOMContentLoaded", function () {
         answerInput.className = "";  // Reset background color class
         answerInput.style.display = "block";
     }
+
 
     answerInput.addEventListener('keypress', function (event) {
         if (event.key === 'Enter') {
