@@ -112,6 +112,8 @@ document.addEventListener("DOMContentLoaded", function () {
         
         // Wait for all fetch operations to complete
         await Promise.all(fetchPromises);
+
+        const totalLevelUps = levelUps;
         
         while (levelUps > 0) {
             console.log('Attempted level up');
@@ -134,7 +136,7 @@ document.addEventListener("DOMContentLoaded", function () {
         await Promise.all(fetchPromises);
     
         if (newCharacters.length > 0) {
-            showLevelUpPopup(newCharacters, levelUps);
+            showLevelUpPopup(newCharacters, totalLevelUps);
             updateCharList();
         }
 
