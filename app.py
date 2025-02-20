@@ -87,7 +87,7 @@ def load_characters():
 def load_words():
     # loads all words that only have characters that are in the character list
     with open(config['word_files_path'] + selected_word_list + '.csv', mode='r', encoding='utf-8') as file:
-        reader = csv.reader(file)
+        reader = csv.reader(file, delimiter=';')
         return {row[0] : row[1].rstrip().split('|') for row in reader if all(char in allowed_chars_set for char in row[0])}
     
     
@@ -248,10 +248,6 @@ def reviews():
     
     if result != None:
         return result
-    
-    representation_analysis()
-    novelty_analysis()
-    weights_analysis()
     
     return render_template('review.html', return_url='/')
 

@@ -72,15 +72,17 @@ document.addEventListener("DOMContentLoaded", function () {
         charDetailsModal.style.display = 'block';
     }
     
-    function showLevelUpPopup(newCharacters) {
+    function showLevelUpPopup(newCharacters, levelUps) {
         const popup = document.createElement('div');
 
-        console.log('Level:', document.getElementById('current-level').textContent, 'New Chars:', newCharacters);
+        const newLevel = parseInt(document.getElementById('current-level').textContent) + levelUps;
+
+        console.log('Level:', newLevel, 'New Chars:', newCharacters);
 
         popup.className = 'level-up-popup';
         popup.innerHTML = `
             <h2>Level Up!</h2>
-            <p>Congratulations! You've reached level ${document.getElementById('current-level').textContent}.</p>
+            <p>Congratulations! You've reached level ${newLevel}.</p>
             <h3>New Characters Unlocked:</h3>
             <div class="new-chars-grid">
                 ${newCharacters.map(char => `<div class="new-char">${char}</div>`).join('')}
@@ -132,7 +134,7 @@ document.addEventListener("DOMContentLoaded", function () {
         await Promise.all(fetchPromises);
     
         if (newCharacters.length > 0) {
-            showLevelUpPopup(newCharacters);
+            showLevelUpPopup(newCharacters, levelUps);
             updateCharList();
         }
 
