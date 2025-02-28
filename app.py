@@ -1,8 +1,39 @@
 import csv
 import random
 import json
-from flask import Flask, render_template, jsonify, request
+import os
+from flask import Flask, render_template, jsonify, request, redirect, url_for
+import logging
 from convert_pinyin import convertPinyin
+
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, 
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+# Ensure directories exist
+def ensure_directories():
+    directories = [
+        os.path.dirname(config['session_file']),
+        os.path.dirname(config['all_characters_file']),
+        os.path.dirname(config['session_char_list']),
+        os.path.dirname(config['unlocked_character_list'])
+    ]
+    for directory in directories:
+        if directory and not os.path.exists(directory):
+            os.makedirs(directory)
+            logger.info(f"Created directory: {directory}")
+
+# Refactored error handling
+def safe_load_file(file_path, default_value=None, mode='r', encoding=None):
+    try:
+        with open(file_path, mode=mode, encoding=encoding) as file:
+            return file.read()
+    except Exception as e:
+        logger.error(f"Error loading file {file_path}: {e}")
+        return default_value
+    
 
 app = Flask(__name__)
 
@@ -61,27 +92,41 @@ def get_unlocked_character_list():
     return unlocked_character_list
 
 
+# Replace the existing load_characters function with this improved version
 def load_characters():
-    original_character_list = get_unlocked_character_list()
-    
-    with open(config['all_characters_file'], mode='r', encoding='utf-8') as file:
-        reader = csv.reader(file)
-        all_char_dict = {row[0] : row[1].rstrip() for row in reader}
-    
-    character_list = original_character_list.intersection(set(all_char_dict.keys()))
-    
-    original_length = len(original_character_list)
-    new_length = len(character_list)
-    
-    if original_length > new_length:
-        print(f'{original_length - new_length} characters in list not recognised (not necessarily Hanzi).')
-        print(sorted(original_character_list.difference(character_list)))
-    
-    with open(config['session_char_list'], mode='w', encoding='utf-8') as outfile:
-        for char in character_list:
-            outfile.write(f"{char},{all_char_dict[char]}\n")
+    try:
+        unlocked_character_text = safe_load_file(config['unlocked_character_list'], 
+                                                default_value="", 
+                                                encoding='utf-8')
+        original_character_list = set(unlocked_character_text.rstrip())
         
-    return {char : all_char_dict[char] for char in character_list}
+        all_char_dict = {}
+        char_data = safe_load_file(config['all_characters_file'], default_value="", encoding='utf-8')
+        
+        for line in char_data.split('\n'):
+            if line.strip():
+                parts = line.split(',', 1)
+                if len(parts) == 2:
+                    all_char_dict[parts[0]] = parts[1].rstrip()
+        
+        character_list = original_character_list.intersection(set(all_char_dict.keys()))
+        
+        original_length = len(original_character_list)
+        new_length = len(character_list)
+        
+        if original_length > new_length:
+            unrecognized = sorted(original_character_list.difference(character_list))
+            logger.warning(f'{original_length - new_length} characters not recognised: {unrecognized}')
+        
+        with open(config['session_char_list'], mode='w', encoding='utf-8') as outfile:
+            for char in character_list:
+                outfile.write(f"{char},{all_char_dict[char]}\n")
+            
+        return {char: all_char_dict[char] for char in character_list}
+    
+    except Exception as e:
+        logger.error(f"Error in load_characters: {e}")
+        return {}
 
 
 def load_words():
@@ -420,6 +465,71 @@ def get_xp_data():
     return jsonify(current_level=current_level, current_xp=current_xp, required_xp=required_xp)
 
 
+@app.route('/get_character_details', methods=['GET'])
+def get_character_details():
+    char = request.args.get('char', '')
+    if not char:
+        return jsonify(error="No character provided"), 400
+    
+    # Get character history
+    char_history = ""
+    try:
+        with open(config['all_characters_file'], mode='r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                if row[0] == char:
+                    char_history = row[1].rstrip()
+                    break
+    except Exception as e:
+        print(f"Error reading character history: {e}")
+    
+    # Calculate stats
+    correct_count = char_history.count('1')
+    incorrect_count = char_history.count('0')
+    total_reviews = correct_count + incorrect_count
+    progress_percent = round((correct_count / max(1, total_reviews)) * 100)
+    
+    return jsonify({
+        "char": char,
+        "progress": progress_percent,
+        "correct_count": correct_count,
+        "incorrect_count": incorrect_count,
+        "total_reviews": total_reviews,
+    })
+
+
+@app.route('/get_character_words', methods=['GET'])
+def get_character_words():
+    char = request.args.get('char', '')
+    if not char:
+        return jsonify(error="No character provided"), 400
+    
+    # Get the current set of unlocked characters
+    unlocked_characters = get_unlocked_character_list()
+    
+    # Find words containing this character (only using unlocked characters)
+    words_with_char = []
+    try:
+        word_file = f"all_words_with_hsk_hanzi"
+        with open(config['word_files_path'] + word_file + '.csv', mode='r', encoding='utf-8') as file:
+            reader = csv.reader(file, delimiter=';')
+            for row in reader:
+                word = row[0]
+                # Only include words where ALL characters are unlocked
+                if char in word and all(c in unlocked_characters for c in word) and len(words_with_char) < 15:
+                    words_with_char.append({
+                        "word": word,
+                        "pinyin": convertPinyin(row[1].rstrip().split('|')[0])
+                    })
+    except Exception as e:
+        print(f"Error finding words with character: {e}")
+        
+    return jsonify({
+        "words": words_with_char
+    })
+    
+
+
 def update_account_data_with_session_data():
     xp = 0
     last_session = account_data['last_session']
@@ -459,12 +569,10 @@ def update_account_data_file():
 
 
 if __name__ == '__main__':
-    global config
-    
-    global selected_word_list
-    
-    config = load_config()
-    
-    selected_word_list = 'hsk_words'
-    
-    app.run(debug=True)
+    try:
+        config = load_config()
+        ensure_directories()
+        selected_word_list = 'hsk_words'
+        app.run(debug=True)
+    except Exception as e:
+        logger.critical(f"Failed to start application: {e}")

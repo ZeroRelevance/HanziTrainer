@@ -29,21 +29,95 @@
         <button id="view-unlocked-chars">View Unlocked Characters</button>
     </div>
 
-    <!-- Modal for unlocked characters -->
-    <div id="unlocked-chars-modal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Unlocked Characters</h2>
-            <div id="unlocked-chars-list"></div>
-        </div>
-    </div>
-
     <!-- Modal for character details -->
     <div id="char-details-modal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2>Character Details</h2>
             <div id="char-details-content"></div>
+        </div>
+    </div>
+
+    <!-- Modal for unlocked characters -->
+    <div id="unlocked-chars-modal" class="modal">
+        <div class="modal-content char-browser-content">
+            <span class="close">&times;</span>
+            <h2>Character Browser</h2>
+            
+            <div class="char-browser-controls">
+                <div class="search-container">
+                    <input type="text" id="char-search" placeholder="Search characters...">
+                </div>
+                <div class="filter-container">
+                    <select id="filter-by">
+                        <option value="all">All Characters</option>
+                        <option value="hsk1">HSK 1</option>
+                        <option value="hsk2">HSK 2</option>
+                        <option value="hsk3">HSK 3</option>
+                        <option value="hsk4">HSK 4</option>
+                        <option value="hsk5">HSK 5</option>
+                        <option value="hsk6">HSK 6</option>
+                        <option value="hsk79">HSK 7-9</option>
+                        <option value="recent">Recently Learned</option>
+                    </select>
+                    <select id="sort-by">
+                        <option value="default">Default Order</option>
+                        <option value="accuracy-high">Accuracy (High to Low)</option>
+                        <option value="accuracy-low">Accuracy (Low to High)</option>
+                        <option value="reviews">Most Reviewed</option>
+                        <option value="least-reviews">Least Reviewed</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="char-stats-summary">
+                <div class="summary-stat">
+                    <span id="total-chars-count" class="stat-value">0</span>
+                    <span class="stat-label">Total Characters</span>
+                </div>
+                <div class="summary-stat">
+                    <span id="mastered-chars-count" class="stat-value">0</span>
+                    <span class="stat-label">Mastered (≥90%)</span>
+                </div>
+                <div class="summary-stat">
+                    <span id="learning-chars-count" class="stat-value">0</span>
+                    <span class="stat-label">Learning (50-89%)</span>
+                </div>
+                <div class="summary-stat">
+                    <span id="struggling-chars-count" class="stat-value">0</span>
+                    <span class="stat-label">Struggling (≤49%)</span>
+                </div>
+            </div>
+            
+            <div id="char-browser-tabs">
+                <div class="tab active" data-tab="grid">Grid View</div>
+                <div class="tab" data-tab="list">List View</div>
+            </div>
+            
+            <div id="char-browser-views">
+                <div id="grid-view" class="browser-view active">
+                    <div id="unlocked-chars-list" class="chars-grid"></div>
+                    <div id="pagination-controls">
+                        <button id="prev-page" disabled>Previous</button>
+                        <span id="page-indicator">Page 1 of 1</span>
+                        <button id="next-page">Next</button>
+                    </div>
+                </div>
+                
+                <div id="list-view" class="browser-view">
+                    <table id="chars-table">
+                        <thead>
+                            <tr>
+                                <th>Character</th>
+                                <th>Accuracy</th>
+                                <th>Reviews</th>
+                                <th>HSK Level</th>
+                            </tr>
+                        </thead>
+                        <tbody id="chars-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
