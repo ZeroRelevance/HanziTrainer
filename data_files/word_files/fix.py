@@ -1,12 +1,16 @@
+import os
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
 words_definitive = dict()
 
-with open(r'C:\Users\tomas\Desktop\Code\Hanzi Trainer\data_files\word_files\every_word.csv', 'r', encoding='utf-8') as f:
+with open(rf'{current_dir}\every_word.csv', 'r', encoding='utf-8') as f:
     for line in f:
         if ';' in line:
             hanzi, pinyin = line.split(';')
             words_definitive[hanzi] = pinyin
 
-file_name = r'C:\Users\tomas\Desktop\Code\Hanzi Trainer\data_files\word_files\hsk79_words.csv'
+file_name = rf'{current_dir}\hsk79_words.csv'
 word_list = []
 
 with open(file_name, 'r', encoding='utf-8') as f:

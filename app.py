@@ -324,6 +324,13 @@ def check_answer():
     
     print(user_input, current_word, correct_answers)
     
+    # Replaces er with r in inputs
+    parts = user_input.split(' ')
+    for i, part in enumerate(parts):
+        if part in {'er', 'er5'}:
+            parts[i] = 'r'
+    user_input = ' '.join(parts)
+    
     # instant fail if wrong number of characters
     if len(user_input.split(' ')) == len(current_word):
         # checks each character of input for compatibility with answers
@@ -546,8 +553,8 @@ def update_account_data_with_session_data():
     
 def update_csv():
     with open(config['session_char_list'], mode='w', encoding='utf-8') as outfile:
-        for char in allowed_chars_set:
-            outfile.write(f"{char},{character_dict[char]}\n")
+        input_text = '\n'.join([f'{char},{character_dict[char]}' for char in allowed_chars_set])
+        outfile.write(input_text)
     
     sessions[-1] = (str(len(sessions)-1), str(correct_num), str(total_num))
     with open(config['session_file'], mode='w', encoding='utf-8') as outfile:
